@@ -21,18 +21,6 @@ enum Scale {
 string PrintNote(int note, int flag) {
     string actualNote;
     switch (note) {
-    case 45: actualNote = "A2"; break;
-    case 46: actualNote = "A2s"; break;
-    case 47: actualNote = "B2"; break;
-    case 48: actualNote = "C3"; break;
-    case 49: actualNote = "C3s"; break;
-    case 50: actualNote = "D3"; break;
-    case 51: actualNote = "D3s"; break;
-    case 52: actualNote = "E3"; break;
-    case 53: actualNote = "F3"; break;
-    case 54: actualNote = "F3s"; break;
-    case 55: actualNote = "G3"; break;
-    case 56: actualNote = "G3s"; break;
     case 57: actualNote = "A3"; break;
     case 58: actualNote = "A3s"; break;
     case 59: actualNote = "B3"; break;
@@ -42,6 +30,18 @@ string PrintNote(int note, int flag) {
     case 63: actualNote = "D4s"; break;
     case 64: actualNote = "E4"; break;
     case 65: actualNote = "F4"; break;
+    case 66: actualNote = "F4s"; break;
+    case 67: actualNote = "G4"; break;
+    case 68: actualNote = "G4s"; break;
+    case 69: actualNote = "A4"; break;
+    case 70: actualNote = "A4s"; break;
+    case 71: actualNote = "B4"; break;
+    case 72: actualNote = "C5"; break;
+    case 73: actualNote = "C5s"; break;
+    case 74: actualNote = "D5"; break;
+    case 75: actualNote = "D5s"; break;
+    case 76: actualNote = "E5"; break;
+    case 77: actualNote = "F5"; break;
     default: break;
     }
     if (flag)
@@ -64,7 +64,101 @@ void HideCursor(void) {           //隐藏光标
 }
 const int middlePosition = 54;
 const int topPosition = 6;
+
+void SingleToneWithStandardNote() {
+    system("cls");
+    HMIDIOUT myMidi;
+    midiOutOpen(&myMidi, 0, 0, 0, 0);
+    int voice = 0x0;            // 声音参数
+    int voiceType = 0x90;       // 音色，范围为0x90~0x9f,其中0x99为鼓，其余为钢琴
+    int Volume = 0x42;          // 旋律音量
+    int times = 1;
+    int count = 0;
+    GotoXY(middlePosition - 2, topPosition);
+    cout << "单   音   听   辨" << endl;
+    GotoXY(middlePosition - 10, topPosition + 2);
+    cout << "请设置:每    个音符放一次标准音";
+    GotoXY(middlePosition, topPosition + 2);
+    scanf("%d", &times);
+    GotoXY(middlePosition, topPosition + 4);
+    cout << "●  准备好了";
+    while (getch() != 32) {}
+    do {
+        system("cls");
+        GotoXY(middlePosition - 2, topPosition);
+        cout << "单   音   听   辨" << endl;
+        GotoXY(middlePosition - 5, topPosition + 2);
+        cout << "每 "<<times<<" 个音符放一次标准音";
+        GotoXY(middlePosition, topPosition + 4);
+        cout << "当前:" << count + 1;
+        if (count == 0) {
+            GotoXY(middlePosition, topPosition + 6);
+            cout << "标 准 音 :";
+            voice = (Volume << 16) + (69 << 8) + voiceType;
+            midiOutShortMsg(myMidi, voice);
+            PrintNote(69, 1);
+            Sleep(2000);
+        }
+        srand((unsigned int)(time(NULL)));
+        int currentNote = 57 + rand() % 20;
+        string myNote = "";
+        voice = (Volume << 16) + (currentNote << 8) + voiceType;
+        midiOutShortMsg(myMidi, voice);
+        GotoXY(middlePosition, topPosition + 8);
+        cout << "当 前 音 :"; cin >> myNote;
+        GotoXY(middlePosition, topPosition + 14);
+        if (NoteCmp(myNote, currentNote))
+            cout << " 正确！          ";
+        else {
+            cout << "错误！正确音:";
+            PrintNote(currentNote, 1);
+            voice = (Volume << 16) + (currentNote << 8) + voiceType;
+            midiOutShortMsg(myMidi, voice);
+            while (getch() != 32) { cout << "空格继续..."; }
+        }
+        count++; if (count == times) count = 0;
+    } while (getch() != '9');
+    midiOutClose(myMidi);
+}
+
+int SingleTone() {        //乐谱
+    system("cls");
+    GotoXY(middlePosition - 2, topPosition);
+    cout << "单   音   听   辨" << endl;
+    GotoXY(middlePosition, topPosition + 2);
+    cout << "选 择 界 面";
+    GotoXY(middlePosition, topPosition + 5);
+    cout << "●  重复标准音";
+    GotoXY(middlePosition, topPosition + 7);
+    cout << "○  仅一次标准音";
+    GotoXY(middlePosition, topPosition + 9);
+    cout << "○  返回";
+    HideCursor();
+    char input;
+    int i = 0;
+    while (1) {
+        input = getch();
+        switch (input) {
+        case 72://上
+            GotoXY(middlePosition, i + topPosition + 5); cout << "○"; i -= 2; break;
+        case 80://下
+            GotoXY(middlePosition, i + topPosition + 5); cout << "○"; i += 2; break;
+        case 32://空格
+            switch (i/2+1)
+            {
+            case 1:SingleToneWithStandardNote(); return 1; break;
+            default:return 0; break;
+            }
+            break;
+        }
+        if (i > 8) i = 0;
+        if (i < -1) i = 8;
+        GotoXY(middlePosition, i + topPosition + 5); cout << "●";
+    }
+}
+
 int MainMenu() {
+    system("cls");
     GotoXY(middlePosition - 12, topPosition);
     cout << "欢 迎 牛 总 进 行 今 天 的 视 唱 练 耳！" << endl;
     GotoXY(middlePosition, topPosition + 2);
@@ -80,9 +174,9 @@ int MainMenu() {
     GotoXY(middlePosition, topPosition + 13);
     cout << "○  暂未开发";
     HideCursor();
-    char input;                 //输入数据
-    int i = 0;                  //计数器
-    while (1) {                  //登录/注册选择
+    char input;                 
+    int i = 0;                  
+    while (1) {                  
         input = getch();
         switch (input) {
         case 72://上
@@ -90,55 +184,18 @@ int MainMenu() {
         case 80://下
             GotoXY(middlePosition, i + topPosition + 5); cout << "○"; i += 2; break;
         case 32://空格
-            return i / 2 + 1;
+            switch (i/2+1)
+            {
+            case 1:SingleTone(); return 1; break;
+            default: return 0;
+                break;
+            }
             break;
         }
         if (i > 8) i = 0;
         if (i < -1) i = 8;
         GotoXY(middlePosition, i + topPosition + 5); cout << "●";
     }
-}
-
-void SingleTone() {        //乐谱
-    system("cls");
-    HMIDIOUT myMidi;
-    midiOutOpen(&myMidi, 0, 0, 0, 0);
-    int voice = 0x0;            // 声音参数
-    int voiceType = 0x90;       // 音色，范围为0x90~0x9f,其中0x99为鼓，其余为钢琴
-    int Volume = 0x42;          // 旋律音量
-    GotoXY(middlePosition - 2, topPosition);
-    cout << "单   音   听   辨" << endl;
-    GotoXY(middlePosition, topPosition + 2);
-    cout << "●  准备好了";
-    while (getch() != 32) {}
-    do {
-        system("cls");
-        GotoXY(middlePosition, topPosition + 4);
-        cout << "标 准 音 :";
-        voice = (Volume << 16) + (57 << 8) + voiceType;
-        midiOutShortMsg(myMidi, voice);
-        cout << "A3";
-        Sleep(3000);
-        GotoXY(middlePosition, topPosition + 6);
-        srand((unsigned int)(time(NULL)));
-        int currentNote = 45 + rand() % 20;
-        string myNote = "";
-        voice = (Volume << 16) + (currentNote << 8) + voiceType;
-        midiOutShortMsg(myMidi, voice);
-        cout << "当 前 音:";
-        cin >> myNote;
-        GotoXY(middlePosition, topPosition + 14);
-        if (NoteCmp(myNote, currentNote))
-            cout << " 正确！ ";
-        else {
-            cout << "错误！正确音:";
-            PrintNote(currentNote, 1);
-            voice = (Volume << 16) + (currentNote << 8) + voiceType;
-            midiOutShortMsg(myMidi, voice);
-            Sleep(3000);
-        }
-    } while (getch() != 9);
-    midiOutClose(myMidi);
 }
 
 int main() {
